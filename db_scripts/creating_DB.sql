@@ -1,5 +1,5 @@
-CREATE DATABASE Bank;
-Drop DATABASE IF EXISTS Bank;
+CREATE DATABASE bank;
+Drop DATABASE IF EXISTS bank;
 -- Column Descriptions
 
 -- ID: A unique identifier for each individual.

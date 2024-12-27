@@ -33,18 +33,3 @@ SELECT
     COUNT(*) AS Count
 FROM client_data  JOIN Credit_record  ON client_data.ID = Credit_record.ID
 GROUP BY client_data.DAYS_EMPLOYED, Credit_record.STATUS;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
