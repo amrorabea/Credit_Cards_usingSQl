@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import seaborn as sns
@@ -6,23 +7,16 @@ import plotly.express as px
 import plotly.graph_objects as go
 from sqlalchemy import create_engine
 import numpy as np
+from dotenv import load_dotenv
 
 # Configure page
 st.set_page_config(page_title="Credit Analysis Dashboard", layout="wide", initial_sidebar_state="expanded")
 
-# Database connection configuration
-DB_CONFIG = {
-    "dbname": "bank",
-    "user": "postgres",
-    "password": "123",
-    "host": "localhost",
-    "port": "5432"
-}
-
 # Create database connection
 @st.cache_resource
 def get_database_connection():
-    connection_string = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
+    load_dotenv()
+    connection_string = f"postgresql://{os.getenv("DB_USER")}:{os.getenv("DB_PASS")}@{os.getenv("DB_HOST")}:{os.getenv("DB_PORT")}/{os.getenv("DB_NAME")}"
     return create_engine(connection_string)
 
 # Cache for SQL queries
