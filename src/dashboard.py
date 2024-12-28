@@ -59,7 +59,7 @@ if page == "Overview":
     col1.metric("Total Clients", f"{total_clients:,}")
     
     # Average income
-    avg_income = execute_query(engine, "SELECT AVG(AMT_INCOME_TOTAL) as avg_income FROM client_data").iloc[0]['avg_income']
+    avg_income = execute_query(engine, "SELECT AVG(amt_income_total) as avg_income FROM client_data").iloc[0]['avg_income']
     col2.metric("Average Income", format_currency(avg_income))
     
     # Total credit records
@@ -88,14 +88,14 @@ if page == "Overview":
     # Income type and credit status
     st.subheader("Income Type vs Credit Status")
     income_status = execute_query(engine, """
-        SELECT c.NAME_INCOME_TYPE, cr.status, COUNT(*) as count
+        SELECT c.name_income_type, cr.status, COUNT(*) as count
         FROM client_data c
         JOIN credit_record cr ON c.id = cr.id
-        GROUP BY c.NAME_INCOME_TYPE, cr.status
+        GROUP BY c.name_income_type, cr.status
         ORDER BY count DESC
     """)
     fig = px.treemap(income_status, 
-                    path=['NAME_INCOME_TYPE', 'status'],
+                    path=['name_income_type', 'status'],
                     values='count',
                     title='Income Type and Credit Status Distribution')
     st.plotly_chart(fig, use_container_width=True)
@@ -108,14 +108,14 @@ elif page == "Client Demographics":
     with col1:
         # Gender distribution
         gender_dist = execute_query(engine, """
-            SELECT CODE_GENDER, COUNT(*) as count,
-                AVG(AMT_INCOME_TOTAL) as avg_income
+            SELECT code_gender, COUNT(*) as count,
+                AVG(amt_income_total) as avg_income
             FROM client_data
-            GROUP BY CODE_GENDER
+            GROUP BY code_gender
         """)
-        fig = px.bar(gender_dist, x='CODE_GENDER', y='count',
+        fig = px.bar(gender_dist, x='code_gender', y='count',
                     title='Gender Distribution',
-                    labels={'CODE_GENDER': 'Gender', 'count': 'Number of Clients'})
+                    labels={'code_gender': 'Gender', 'count': 'Number of Clients'})
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
@@ -143,18 +143,18 @@ elif page == "Client Demographics":
     st.subheader("Family Status Impact on Credit")
     family_credit = execute_query(engine, """
         SELECT 
-            c.NAME_FAMILY_STATUS,
+            c.name_family_status,
             cr.status,
             COUNT(*) as count
         FROM client_data c
         JOIN credit_record cr ON c.id = cr.id
-        GROUP BY c.NAME_FAMILY_STATUS, cr.status
+        GROUP BY c.name_family_status, cr.status
         ORDER BY count DESC
     """)
     fig = px.sunburst(family_credit, 
-                      path=['NAME_FAMILY_STATUS', 'status'],
-                      values='count',
-                      title='Family Status and Credit Status Distribution')
+                    path=['name_family_status', 'status'],
+                    values='count',
+                    title='Family Status and Credit Status Distribution')
     st.plotly_chart(fig, use_container_width=True)
 
 elif page == "Income Analysis":
@@ -162,23 +162,12 @@ elif page == "Income Analysis":
     
     # Income distribution
     st.subheader("Income Distribution by Type")
-    income_dist = execute_query(engine, """
-        SELECT 
-            NAME_INCOME_TYPE,
-            COUNT(*) as count,
-            AVG(AMT_INCOME_TOTAL) as avg_income,
-            MIN(AMT_INCOME_TOTAL) as min_income,
-            MAX(AMT_INCOME_TOTAL) as max_income
-        FROM client_data
-        GROUP BY NAME_INCOME_TYPE
-        ORDER BY avg_income DESC
-    """)
     
     fig = px.box(execute_query(engine, """
-        SELECT NAME_INCOME_TYPE, AMT_INCOME_TOTAL
+        SELECT name_income_type, amt_income_total
         FROM client_data
-    """), x='NAME_INCOME_TYPE', y='AMT_INCOME_TOTAL',
-                 title='Income Distribution by Type')
+    """), x='name_income_type', y='amt_income_total',
+                title='Income Distribution by Type')
     st.plotly_chart(fig, use_container_width=True)
     
     # Income vs Credit Status
@@ -186,9 +175,9 @@ elif page == "Income Analysis":
     income_credit = execute_query(engine, """
         SELECT 
             CASE 
-                WHEN c.AMT_INCOME_TOTAL < 50000 THEN 'Low Income'
-                WHEN c.AMT_INCOME_TOTAL < 100000 THEN 'Middle Income'
-                WHEN c.AMT_INCOME_TOTAL < 200000 THEN 'High Income'
+                WHEN c.amt_income_total < 50000 THEN 'Low Income'
+                WHEN c.amt_income_total < 100000 THEN 'Middle Income'
+                WHEN c.amt_income_total < 200000 THEN 'High Income'
                 ELSE 'Very High Income'
             END as income_category,
             cr.status,
@@ -200,9 +189,9 @@ elif page == "Income Analysis":
     """)
     
     fig = px.treemap(income_credit,
-                     path=['income_category', 'status'],
-                     values='count',
-                     title='Income Level and Credit Status Distribution')
+                    path=['income_category', 'status'],
+                    values='count',
+                    title='Income Level and Credit Status Distribution')
     st.plotly_chart(fig, use_container_width=True)
 
 elif page == "Credit Status":
@@ -212,16 +201,16 @@ elif page == "Credit Status":
     st.subheader("Credit Status Trends")
     status_trend = execute_query(engine, """
         SELECT 
-            MONTH_BALANCE,
+            months_balance,
             status,
             COUNT(*) as count
         FROM credit_record
-        GROUP BY MONTH_BALANCE, status
-        ORDER BY MONTH_BALANCE
+        GROUP BY months_balance, status
+        ORDER BY months_balance
     """)
     
-    fig = px.line(status_trend, x='MONTH_BALANCE', y='count', color='status',
-                  title='Credit Status Trends Over Time')
+    fig = px.line(status_trend, x='months_balance', y='count', color='status',
+                title='Credit Status Trends Over Time')
     st.plotly_chart(fig, use_container_width=True)
     
     # Status transition matrix
@@ -231,7 +220,7 @@ elif page == "Credit Status":
             SELECT 
                 id,
                 status as current_status,
-                LEAD(status) OVER (PARTITION BY id ORDER BY MONTH_BALANCE) as next_status
+                LEAD(status) OVER (PARTITION BY id ORDER BY months_balance) as next_status
             FROM credit_record
         )
         SELECT 
@@ -246,8 +235,8 @@ elif page == "Credit Status":
     
     # Create transition matrix heatmap
     pivot_transitions = transitions.pivot(index='current_status', 
-                                       columns='next_status', 
-                                       values='transitions').fillna(0)
+                                    columns='next_status', 
+                                    values='transitions').fillna(0)
     
     fig = px.imshow(pivot_transitions,
                     title='Credit Status Transition Matrix',
@@ -261,38 +250,38 @@ elif page == "Educational Impact":
     st.subheader("Education Type Distribution")
     edu_dist = execute_query(engine, """
         SELECT 
-            NAME_EDUCATION_TYPE,
+            name_education_type,
             COUNT(*) as count,
-            AVG(AMT_INCOME_TOTAL) as avg_income
+            AVG(amt_income_total) as avg_income
         FROM client_data
-        GROUP BY NAME_EDUCATION_TYPE
+        GROUP BY name_education_type
         ORDER BY count DESC
     """)
     
     fig = px.bar(edu_dist,
-                 x='NAME_EDUCATION_TYPE',
-                 y=['count', 'avg_income'],
-                 title='Education Type Distribution and Average Income',
-                 barmode='group')
+                x='name_education_type',
+                y=['count', 'avg_income'],
+                title='Education Type Distribution and Average Income',
+                barmode='group')
     st.plotly_chart(fig, use_container_width=True)
     
     # Education and credit status
     st.subheader("Education Impact on Credit Status")
     edu_credit = execute_query(engine, """
         SELECT 
-            c.NAME_EDUCATION_TYPE,
+            c.name_education_type,
             cr.status,
             COUNT(*) as count
         FROM client_data c
         JOIN credit_record cr ON c.id = cr.id
-        GROUP BY c.NAME_EDUCATION_TYPE, cr.status
+        GROUP BY c.name_education_type, cr.status
         ORDER BY count DESC
     """)
     
     fig = px.sunburst(edu_credit,
-                      path=['NAME_EDUCATION_TYPE', 'status'],
-                      values='count',
-                      title='Education Type and Credit Status Distribution')
+                    path=['name_education_type', 'status'],
+                    values='count',
+                    title='Education Type and Credit Status Distribution')
     st.plotly_chart(fig, use_container_width=True)
 
 elif page == "Custom Analysis":
@@ -302,11 +291,11 @@ elif page == "Custom Analysis":
     st.subheader("Create Custom Analysis")
     
     # Select variables
-    numeric_columns = ['AMT_INCOME_TOTAL', 'CNT_CHILDREN', 'DAYS_EMPLOYED', 'CNT_FAM_MEMBERS']
-    categorical_columns = ['CODE_GENDER', 'NAME_EDUCATION_TYPE', 'NAME_FAMILY_STATUS', 'NAME_INCOME_TYPE']
+    numeric_columns = ['amt_income_total', 'cnt_children', 'days_employed', 'cnt_fam_members']
+    categorical_columns = ['code_gender', 'name_education_type', 'name_family_status', 'name_income_type']
     
     analysis_type = st.selectbox("Select Analysis Type",
-                               ["Correlation", "Distribution", "Cross-tabulation"])
+                            ["Correlation", "Distribution", "Cross-tabulation"])
     
     if analysis_type == "Correlation":
         var1 = st.selectbox("Select first variable", numeric_columns)
