@@ -1,0 +1,14 @@
+streamlit
+pandas
+seaborn
+matplotlib
+plotly
+sqlalchemy
+numpy
+python-dotenv
+psycopg2-binary
+plotly.express
+plotly.graph_objects
+statsmodels
+jupyter
+ipykernel
