@@ -7,3 +7,4 @@ sqlalchemy
 numpy
 python-dotenv
 psycopg2-binary
+statsmodels
